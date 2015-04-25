@@ -27,7 +27,7 @@ using namespace cv;
 
 Mat src; int thresh = 100;
 
-/// Global Variables
+/// Global Variables/Users/lucylin/Dropbox/class/VI/project/Virtual_Xylophone/Virtual_Xylophone/color_region.cpp
 Mat img; Mat templ; Mat result;
 char* image_window = "Source Image";
 char* result_window = "Result window";
@@ -47,10 +47,16 @@ int MatchingMethod( int, void*);
 int MatchingMethod( int, void*, int);
 void showImage(Mat img, string name);
 bool process_queue();
-
+void processMask(Mat& src);
+void getProperty(const Mat src, Matx<int, 4, 2>& vertex);
+Mat redFilter(const Mat& src);
+Mat orangeFilter(const Mat& src);
+Mat yellowFilter(const Mat& src);
+Mat greenFilter(const Mat& src);
+Mat blueFilter(const Mat& src);
 
 string workspace = "/Users/lucylin/Dropbox/class/VI/project/";
-//test case: 15.jpg (267, 421) (293, 447)
+
 
 int main(int argc, const char * argv[])
 {
@@ -94,18 +100,65 @@ int main(int argc, const char * argv[])
     /// Load image and template
     int coor;
     templ = imread( workspace+"test_case2/"+"template.jpg", 1 );
-    for (int i = 0; i<150; i++)
+    
+    
+    //process 'color keyboards'
+    Mat frame,hsv_frame;
+    Mat redMask,orangeMask,yellowMask,greenMask,blueMask;
+    //int redSize,orangeSize,yellowSize,greenSize,blueSize;
+    Matx<int, 4, 2> redVertex,orangeVertex,yellowVertex,greenVertex,blueVertex;
+    
+    //use the first frame to locate color regions
+    int i = 0;
+    frame = imread( workspace+"test_case2/"+to_string(i)+".jpg", 1 );
+    cvtColor(frame, hsv_frame, CV_BGR2HSV);
+    
+    redMask = redFilter(hsv_frame);
+    orangeMask = orangeFilter(hsv_frame);
+    yellowMask = yellowFilter(hsv_frame);
+    greenMask = greenFilter(hsv_frame);
+    blueMask = blueFilter(hsv_frame);
+    
+    processMask(redMask);
+    processMask(orangeMask);
+    processMask(yellowMask);
+    processMask(greenMask);
+    processMask(blueMask);
+    
+//    getProperty(redMask,redVertex);
+//    getProperty(orangeMask,orangeVertex);
+//    getProperty(yellowMask,yellowVertex);
+//    getProperty(greenMask,greenVertex);
+//    getProperty(blueMask,blueVertex);
+    
+//    imwrite(workspace+"Red"+to_string(i)+".jpg",redMask);
+//    imwrite(workspace+"Orange"+to_string(i)+".jpg",orangeMask);
+//    imwrite(workspace+"Yellow"+to_string(i)+".jpg",yellowMask);
+//    imwrite(workspace+"Green"+to_string(i)+".jpg",greenMask);
+//    imwrite(workspace+"Blue"+to_string(i)+".jpg",blueMask);
+    
+    for (int i = 1; i<150; i++)
     {
         img = imread( workspace+"test_case2/"+to_string(i)+".jpg", 1 );
     
         coor = MatchingMethod( 0, 0, i);
         queue.push_back(coor);
-        if(process_queue())
-         cout<<"hit!!";
+        if(process_queue()) {
+            cout<<"hit!!";
+            //go through masks
+            if(redMask.at<uchar>(lastDetection.y, lastDetection.x)>0)
+                cout<<"red"<<endl;
+            else if(orangeMask.at<uchar>(lastDetection.y, lastDetection.x)>0)
+                cout<<"orange"<<endl;
+            else if(yellowMask.at<uchar>(lastDetection.y, lastDetection.x)>0)
+                cout<<"yellow"<<endl;
+            else if(greenMask.at<uchar>(lastDetection.y, lastDetection.x)>0)
+                cout<<"green"<<endl;
+            else if(blueMask.at<uchar>(lastDetection.y, lastDetection.x)>0)
+                cout<<"blue"<<endl;
+
+        }
     }
-    
-//    img = imread( workspace+"test_case2/"+"136.jpg", 1 );
-//    MatchingMethod( 0, 0);
 
     waitKey(0);
     return 0;
@@ -126,6 +179,8 @@ int MatchingMethod( int, void*, int idx)
     int padding_y;
     int bound_x;
     int bound_y;
+    
+    //confine the search area
     if (lastDetection.x == 0 && lastDetection.y == 0) {//first iteration, search lower 3/5 of the image
         anchor.x = 0;
         anchor.y = img.rows/5*2;
@@ -177,15 +232,15 @@ int MatchingMethod( int, void*, int idx)
     { matchLoc = maxLoc; }
     
     
-    ///change back to the x, y in original image
+    // change back to the x, y in original image
     matchLoc.y += anchor.y;
     matchLoc.x += anchor.x;
     
-    /// Show me what you got
+    // Show me what you got
     rectangle( img_display, matchLoc, Point( matchLoc.x + templ.cols , matchLoc.y + templ.rows), Scalar::all(0), 2, 8, 0 );
     rectangle( img_display, anchor, Point( anchor.x + padding_x , anchor.y + padding_y), Scalar::all(0), 2, 8, 0 );
-//    rectangle( result, matchLoc, Point( matchLoc.x + templ.cols , matchLoc.y + templ.rows ), Scalar::all(0), 2, 8, 0 );
     
+    // update
     lastDetection = matchLoc;
     
     imshow( image_window, img_display );
@@ -227,3 +282,118 @@ void showImage(Mat img, const string name) {
     
 }
 
+Mat redFilter(const Mat& src)
+{
+    Mat upperRed, lowerRed, redImage;
+    inRange(src, Scalar(170, 100, 120), Scalar(255, 255, 255), upperRed);
+    inRange(src, Scalar(0, 100, 120), Scalar(10, 255, 255), lowerRed);
+    bitwise_or(upperRed, lowerRed, redImage);
+    
+    return redImage;
+}
+Mat orangeFilter(const Mat& src)
+{
+    Mat orangeImage;
+    inRange(src, Scalar(10, 140, 130), Scalar(20, 255, 255), orangeImage);
+    
+    return orangeImage;
+}
+Mat yellowFilter(const Mat& src)
+{
+    Mat yellowImage;
+    inRange(src, Scalar(20, 50, 100), Scalar(30, 255, 255), yellowImage);
+    
+    return yellowImage;
+}
+Mat greenFilter(const Mat& src)
+{
+    Mat greenImage;
+    inRange(src, Scalar(35, 50, 50), Scalar(75, 255, 255), greenImage);
+    
+    return greenImage;
+}
+Mat blueFilter(const Mat& src)
+{
+    Mat blueImage;
+    inRange(src, Scalar(85, 30, 50), Scalar(130, 255, 255), blueImage);
+    
+    return blueImage;
+}
+
+void processMask(Mat& mask)
+{
+    // cut off the upper 2/5 of the image
+    for(int row=0;row<H*2/5;row++){
+        for(int col=0;col<W;col++){
+            mask.at<uchar>(row,col) = 0;
+        }
+    }
+    
+    // remove small regions in mask
+    erode(mask, mask, getStructuringElement(MORPH_RECT, Size(3,3)),Point(-1,-1),5);
+    dilate(mask, mask, getStructuringElement(MORPH_RECT, Size(3,3)),Point(-1,-1),5);
+    
+    // remove small holes in mask
+    dilate(mask, mask, getStructuringElement(MORPH_RECT, Size(3,3)),Point(-1,-1),5);
+    erode(mask, mask, getStructuringElement(MORPH_RECT, Size(3,3)),Point(-1,-1),5);
+    
+    //    return mask;
+}
+
+void getProperty(const Mat src, Matx<int, 4, 2>& vertex){
+    Size WH=src.size();
+    Mat edges;
+    vector<vector<Point> > contours;
+    vector<Vec4i> hierarchy;
+    int minThreshold = 2;
+    
+    // find the polygon inside the mask
+    Canny(src, edges, minThreshold, minThreshold*3);
+    findContours(edges, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+    vector<vector<Point> > contours_poly(contours.size());
+    
+    // find the four corners and store them in vertex
+    int UL=5000,UR=0,DL=5000,DR=-5000;
+    int sumXY,diffXY;
+    for(int i=0;i<contours.size();i++){
+        approxPolyDP(contours[i], contours_poly[i], 3, false);
+        vector<Point> temp = contours_poly[i];
+        cout<<temp.size()<<endl;
+        for(int j=0;j<temp.size();j++){
+            sumXY = temp[j].x+temp[j].y;
+            if(sumXY<UL){
+                UL=sumXY;
+                vertex(0,0) = temp[j].x;
+                vertex(0,1) = temp[j].y;
+            }
+            if(sumXY>DR){
+                DR=sumXY;
+                vertex(3,0) = temp[j].x;
+                vertex(3,1) = temp[j].y;
+            }
+            diffXY = temp[j].x-temp[j].y;
+            if(diffXY<DL){
+                DL=diffXY;
+                vertex(2,0) = temp[j].x;
+                vertex(2,1) = temp[j].y;
+            }
+            if(diffXY>UR){
+                UR=diffXY;
+                vertex(1,0) = temp[j].x;
+                vertex(1,1) = temp[j].y;
+            }
+        }
+    }
+    
+    // get the area of color mask
+    /*
+    size=0;
+    for(int r=1;r<=WH.height;r++){
+        for(int c=1;c<WH.width;c++){
+            if(src.at<uchar>(r,c)>0){
+                size++;
+            }
+        }
+    }
+     */
+}
