@@ -19,51 +19,41 @@
 #include <stdlib.h>
 #include <string>
 
+//photobooth video has fps=15
+
 
 using namespace std;
 using namespace cv;
 
 Mat src; int thresh = 100;
 
-
-/// Function header
-void showImage(Mat img, string name);
 /// Global Variables
 Mat img; Mat templ; Mat result;
 char* image_window = "Source Image";
 char* result_window = "Result window";
+int W;
+int H;
+Point lastDetection;
+vector<int> queue;
+bool hit = false;
 
+//template matching method parameter for OpenCV function
 int match_method = 3;
 int max_Trackbar = 5;
 
+
 /// Function Headers
-void MatchingMethod( int, void*);
-void MatchingMethod( int, void*, int);
+int MatchingMethod( int, void*);
+int MatchingMethod( int, void*, int);
+void showImage(Mat img, string name);
+bool process_queue();
 
 
-//int num = 0;
 string workspace = "/Users/lucylin/Dropbox/class/VI/project/";
 //test case: 15.jpg (267, 421) (293, 447)
 
 int main(int argc, const char * argv[])
 {
-//    src = imread(workspace+"test.png");
-//    int cn = src.channels();
-//    Scalar_<uint8_t> bgrPixel;
-//    uint8_t* pixelPtr = (uint8_t*)src.data;
-//    
-//    for(int i = 0; i < src.rows; i++)
-//    {
-//        for(int j = 0; j < src.cols; j++)
-//        {
-//            bgrPixel.val[0] = pixelPtr[i*src.cols*cn + j*cn + 0]; // B
-//            cout<<int(bgrPixel.val[0])<<endl;
-//            bgrPixel.val[1] = pixelPtr[i*src.cols*cn + j*cn + 1]; // G
-//            bgrPixel.val[2] = pixelPtr[i*src.cols*cn + j*cn + 2]; // R
-//            
-//            // do something with BGR values...
-//        }
-//    }
     
 //    VideoCapture cap;
 //    string filepath = workspace+"test_video2.mov";
@@ -87,6 +77,12 @@ int main(int argc, const char * argv[])
 //        imwrite(workspace+"test_case2/"+to_string(count)+".jpg", src);
 //    }
     
+    //initilize detecteion point
+    lastDetection.x = 0;
+    lastDetection.y = 0;
+    
+    W = 540;
+    H = 360;
     
     /// Create windows
     namedWindow( image_window, CV_WINDOW_AUTOSIZE );
@@ -96,12 +92,16 @@ int main(int argc, const char * argv[])
 //    createTrackbar( trackbar_label, image_window, &match_method, max_Trackbar, MatchingMethod );
 
     /// Load image and template
+    int coor;
     templ = imread( workspace+"test_case2/"+"template.jpg", 1 );
     for (int i = 0; i<150; i++)
     {
         img = imread( workspace+"test_case2/"+to_string(i)+".jpg", 1 );
     
-        MatchingMethod( 0, 0, i);
+        coor = MatchingMethod( 0, 0, i);
+        queue.push_back(coor);
+        if(process_queue())
+         cout<<"hit!!";
     }
     
 //    img = imread( workspace+"test_case2/"+"136.jpg", 1 );
@@ -116,21 +116,47 @@ int main(int argc, const char * argv[])
  * @function MatchingMethod
  * @brief Trackbar callback
  */
-void MatchingMethod( int, void*, int idx)
+int MatchingMethod( int, void*, int idx)
 {
     /// Source image to display
     Mat img_display;
     img.copyTo( img_display );
-    int padding = img.rows/5*2;
+    Point anchor;
+    int padding_x;
+    int padding_y;
+    int bound_x;
+    int bound_y;
+    if (lastDetection.x == 0 && lastDetection.y == 0) {//first iteration, search lower 3/5 of the image
+        anchor.x = 0;
+        anchor.y = img.rows/5*2;
+        
+        padding_x = img.cols;
+        padding_y = img.rows/5*3;
+    } else {
+        anchor.x = lastDetection.x - 60 > 0 ? lastDetection.x - 60: 0;
+        anchor.y = lastDetection.y - 60 > 0 ? lastDetection.y - 60: 0;
+        bound_x = anchor.x + templ.cols + 60 * 2;
+        bound_y = anchor.y + templ.rows + 60 * 2;
+
+        if(bound_x > W) bound_x = W;
+        if(bound_y > H) bound_y = H;
+        
+        padding_x = bound_x - anchor.x ;
+        padding_y = bound_y - anchor.y ;
+        
+    }
     
     ///create image of lower half region
-    Mat smallImg = Mat(img, Rect(0,padding,img.cols,img.rows-padding));
+    Mat smallImg = Mat(img, Rect(anchor.x, anchor.y, padding_x, padding_y));
+    //cout<<"last: x "<<to_string(lastDetection.x)<<" y "<<to_string(lastDetection.y)<<endl;
+    //cout<<"anchor: x "<<to_string(anchor.x)<<" y "<<to_string(anchor.y)<<endl;
+    //cout<<"anchor + padding x "<<to_string(padding_x + anchor.x)<<" y "<<to_string(anchor.y+padding_y)<<endl;
     
     /// Create the result matrix
 //    int result_cols =  img.cols - templ.cols + 1;
 //    int result_rows = img.rows - templ.rows + 1;
-    int result_cols =  smallImg.cols - smallImg.cols + 1;
-    int result_rows = smallImg.rows - smallImg.rows + 1;
+    int result_cols =  smallImg.cols - templ.cols + 1;
+    int result_rows = smallImg.rows - templ.rows + 1;
     
     result.create( result_rows, result_cols, CV_32FC1 );
     
@@ -150,11 +176,17 @@ void MatchingMethod( int, void*, int idx)
     else
     { matchLoc = maxLoc; }
     
-    ///change back to the original y
-    matchLoc.y += padding;
+    
+    ///change back to the x, y in original image
+    matchLoc.y += anchor.y;
+    matchLoc.x += anchor.x;
+    
     /// Show me what you got
     rectangle( img_display, matchLoc, Point( matchLoc.x + templ.cols , matchLoc.y + templ.rows), Scalar::all(0), 2, 8, 0 );
+    rectangle( img_display, anchor, Point( anchor.x + padding_x , anchor.y + padding_y), Scalar::all(0), 2, 8, 0 );
 //    rectangle( result, matchLoc, Point( matchLoc.x + templ.cols , matchLoc.y + templ.rows ), Scalar::all(0), 2, 8, 0 );
+    
+    lastDetection = matchLoc;
     
     imshow( image_window, img_display );
     imshow( result_window, result );
@@ -162,9 +194,31 @@ void MatchingMethod( int, void*, int idx)
     
     cout<< idx<<" " <<matchLoc.y<<endl;
     
-    return;
+    return matchLoc.y;
 }
 
+bool process_queue() {
+    if ( queue.size() < 8 )
+        return false;
+    if ( queue.size() > 15 )
+        queue.erase(queue.begin());
+    
+    unsigned int partition = queue.size()/3;
+    float part1 = 0;
+    float part2 = 0;
+    float part3 = 0;
+    for (unsigned int i = 0; i<partition; i++)
+        part1 += queue[i];
+    for (unsigned int i = partition; i< 2 * partition; i++)
+        part2 += queue[i];
+    for (unsigned int i = 2 * partition; i < queue.size(); i++)
+        part3 += queue[i];
+    if(part3 > part2 && part1 > part2) {
+        queue.erase(queue.begin(),queue.begin()+2*partition);
+        return true;
+    }
+    return false;
+}
 
 
 void showImage(Mat img, const string name) {

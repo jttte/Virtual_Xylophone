@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>A01D1904-FDEB-4C66-8519-238B9B32D84D</string>
+	<key>IDESourceControlProjectName</key>
+	<string>Virtual_Xylophone</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>9232539F-92EA-40C1-96B8-CE5ACF0EA57C</key>
+		<string>https://github.com/jttte/Virtual_Xylophone.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>Virtual_Xylophone.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>9232539F-92EA-40C1-96B8-CE5ACF0EA57C</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/jttte/Virtual_Xylophone.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>9232539F-92EA-40C1-96B8-CE5ACF0EA57C</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>9232539F-92EA-40C1-96B8-CE5ACF0EA57C</string>
+			<key>IDESourceControlWCCName</key>
+			<string>Virtual_Xylophone</string>
+		</dict>
+	</array>
+</dict>
+</plist>
