@@ -27,7 +27,7 @@ using namespace cv;
 
 Mat src; int thresh = 100;
 
-/// Global Variables/Users/lucylin/Dropbox/class/VI/project/Virtual_Xylophone/Virtual_Xylophone/color_region.cpp
+/// Global Variables
 Mat img; Mat templ; Mat result;
 char* image_window = "Source Image";
 char* result_window = "Result window";
@@ -243,8 +243,8 @@ int MatchingMethod( int, void*, int idx)
     // update
     lastDetection = matchLoc;
     
-    imshow( image_window, img_display );
-    imshow( result_window, result );
+//    imshow( image_window, img_display );
+//    imshow( result_window, result );
     imwrite(workspace+"test_case2/"+"result_"+to_string(idx)+".jpg", img_display);
     
     cout<< idx<<" " <<matchLoc.y<<endl;
