@@ -3,7 +3,7 @@
 //  Virtual_Xylophone
 //
 //  Created by LucyLin on 4/17/15.
-//  Copyright (c) 2015 LucyLin. All rights reserved.
+//  Copyright (c) 2015 LucyLin, Sang Bin Moon. All rights reserved.
 //
 
 #include <opencv2/opencv.hpp>
