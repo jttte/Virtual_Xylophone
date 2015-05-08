@@ -8,16 +8,14 @@
 
 #include <opencv2/opencv.hpp>
 #include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
 #include <opencv2/video/tracking.hpp>
 #include "opencv2/core/core.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/video/background_segm.hpp"
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
+//#include <dos.h>
 
 //photobooth video has fps=15
 
@@ -28,11 +26,10 @@ using namespace cv;
 Mat src; int thresh = 100;
 
 /// Global Variables
-Mat img; Mat templ; Mat result;
+Mat img; Mat result;
 char* image_window = "Source Image";
 char* result_window = "Result window";
-int W;
-int H;
+
 Point lastDetection;
 vector<int> queue;
 bool hit = false;
@@ -41,6 +38,9 @@ bool hit = false;
 int match_method = 3;
 int max_Trackbar = 5;
 
+//image parameter
+int W = 540;
+int H = 360;
 
 /// Function Headers
 int MatchingMethod( int, void*);
@@ -56,6 +56,96 @@ Mat greenFilter(const Mat& src);
 Mat blueFilter(const Mat& src);
 
 string workspace = "/Users/lucylin/Dropbox/class/VI/project/";
+
+class stick{
+    public:
+        Point bound_left_up_;
+        Point bound_right_buttom_;
+        Point match_point_;
+        Point last_detect_point_;
+        int padding;
+        Mat templ;
+    
+        stick(string path){
+            last_detect_point_.x = 0;
+            last_detect_point_.y = 0;
+            padding = 60;
+            templ = imread(path, 1);
+        }
+        Point match (int idx);
+    
+};
+
+Point stick::match (int idx) {
+    /// Source image to display
+    Mat img_display;
+    img.copyTo( img_display );
+    int padding_x;
+    int padding_y;
+
+    
+    //confine the search area
+    if (last_detect_point_.x == 0 && last_detect_point_.y == 0) {//first iteration, search lower 3/5 of the image
+        bound_left_up_.x = 0;
+        bound_left_up_.y = img.rows/5*2;
+        
+        bound_right_buttom_.x = img.cols;
+        bound_right_buttom_.y = img.rows/5*3;
+    } else {
+        bound_left_up_.x = last_detect_point_.x - padding > 0 ? last_detect_point_.x - padding: 0;
+        bound_left_up_.y = last_detect_point_.y - padding > 0 ? last_detect_point_.y - padding: 0;
+        bound_right_buttom_.x = bound_left_up_.x + templ.cols + padding * 2;
+        bound_right_buttom_.y = bound_left_up_.y + templ.rows + padding * 2;
+        
+        if(bound_right_buttom_.x > W) bound_right_buttom_.x = W;
+        if(bound_right_buttom_.y > H) bound_right_buttom_.y = H;
+        
+    }
+    padding_x = bound_right_buttom_.x - bound_left_up_.x ;
+    padding_y = bound_right_buttom_.y - bound_left_up_.y ;
+    
+    ///create image of lower half region
+    Mat smallImg = Mat(img, Rect(bound_left_up_.x, bound_left_up_.y, padding_x, padding_y));
+    int result_cols =  smallImg.cols - templ.cols + 1;
+    int result_rows = smallImg.rows - templ.rows + 1;
+    
+    result.create( result_rows, result_cols, CV_32FC1 );
+    
+    /// Do the Matching and Normalize
+    matchTemplate( smallImg, templ, result, match_method );
+    normalize( result, result, 0, 1, NORM_MINMAX, -1, Mat() );
+    
+    /// Localizing the best match with minMaxLoc
+    double minVal; double maxVal; Point minLoc; Point maxLoc;
+    
+    minMaxLoc( result, &minVal, &maxVal, &minLoc, &maxLoc, Mat() );
+    
+    /// For SQDIFF and SQDIFF_NORMED, the best matches are lower values. For all the other methods, the higher the better
+    if( match_method  == CV_TM_SQDIFF || match_method == CV_TM_SQDIFF_NORMED )
+    { match_point_ = minLoc; }
+    else
+    { match_point_ = maxLoc; }
+    
+    
+    // change back to the x, y in original image
+    match_point_.y += bound_left_up_.y;
+    match_point_.x += bound_left_up_.x;
+    
+    // Show me what you got
+    rectangle( img_display, match_point_, Point( match_point_.x + templ.cols , match_point_.y + templ.rows), Scalar::all(0), 2, 8, 0 );
+    rectangle( img_display, bound_left_up_, Point( bound_left_up_.x + padding_x , bound_left_up_.y + padding_y), Scalar::all(0), 2, 8, 0 );
+    
+    // update
+    last_detect_point_ = match_point_;
+    
+    imwrite(workspace+"test_case2/"+"result_"+to_string(idx)+".jpg", img_display);
+    
+    cout<< idx<<" " <<match_point_.y<<endl;
+    
+    return match_point_;
+
+    
+};
 
 
 int main(int argc, const char * argv[])
@@ -83,12 +173,6 @@ int main(int argc, const char * argv[])
 //        imwrite(workspace+"test_case2/"+to_string(count)+".jpg", src);
 //    }
     
-    //initilize detecteion point
-    lastDetection.x = 0;
-    lastDetection.y = 0;
-    
-    W = 540;
-    H = 360;
     
     /// Create windows
     namedWindow( image_window, CV_WINDOW_AUTOSIZE );
@@ -96,10 +180,6 @@ int main(int argc, const char * argv[])
     /// Create Trackbar
 //    char* trackbar_label = "Method: \n 0: SQDIFF \n 1: SQDIFF NORMED \n 2: TM CCORR \n 3: TM CCORR NORMED \n 4: TM COEFF \n 5: TM COEFF NORMED";
 //    createTrackbar( trackbar_label, image_window, &match_method, max_Trackbar, MatchingMethod );
-
-    /// Load image and template
-    int coor;
-    templ = imread( workspace+"test_case2/"+"template.jpg", 1 );
     
     
     //process 'color keyboards'
@@ -125,131 +205,35 @@ int main(int argc, const char * argv[])
     processMask(greenMask);
     processMask(blueMask);
     
-//    getProperty(redMask,redVertex);
-//    getProperty(orangeMask,orangeVertex);
-//    getProperty(yellowMask,yellowVertex);
-//    getProperty(greenMask,greenVertex);
-//    getProperty(blueMask,blueVertex);
+    stick stick1(workspace+"test_case2/"+"template.jpg");
     
-//    imwrite(workspace+"Red"+to_string(i)+".jpg",redMask);
-//    imwrite(workspace+"Orange"+to_string(i)+".jpg",orangeMask);
-//    imwrite(workspace+"Yellow"+to_string(i)+".jpg",yellowMask);
-//    imwrite(workspace+"Green"+to_string(i)+".jpg",greenMask);
-//    imwrite(workspace+"Blue"+to_string(i)+".jpg",blueMask);
     
     for (int i = 1; i<150; i++)
     {
+        
         img = imread( workspace+"test_case2/"+to_string(i)+".jpg", 1 );
+        Point coor = stick1.match(i);
     
-        coor = MatchingMethod( 0, 0, i);
-        queue.push_back(coor);
+        //coor = MatchingMethod( 0, 0, i);
+        queue.push_back(coor.y);
         if(process_queue()) {
             cout<<"hit!!";
             //go through masks
-            if(redMask.at<uchar>(lastDetection.y, lastDetection.x)>0)
+            if(redMask.at<uchar>(coor.y, coor.x)>0)
                 cout<<"red"<<endl;
-            else if(orangeMask.at<uchar>(lastDetection.y, lastDetection.x)>0)
+            else if(orangeMask.at<uchar>(coor.y, coor.x)>0)
                 cout<<"orange"<<endl;
-            else if(yellowMask.at<uchar>(lastDetection.y, lastDetection.x)>0)
+            else if(yellowMask.at<uchar>(coor.y, coor.x)>0)
                 cout<<"yellow"<<endl;
-            else if(greenMask.at<uchar>(lastDetection.y, lastDetection.x)>0)
+            else if(greenMask.at<uchar>(coor.y, coor.x)>0)
                 cout<<"green"<<endl;
-            else if(blueMask.at<uchar>(lastDetection.y, lastDetection.x)>0)
+            else if(blueMask.at<uchar>(coor.y, coor.x)>0)
                 cout<<"blue"<<endl;
-
+            
         }
     }
-
-    waitKey(0);
     return 0;
 
-}
-
-/**
- * @function MatchingMethod
- * @brief Trackbar callback
- */
-int MatchingMethod( int, void*, int idx)
-{
-    /// Source image to display
-    Mat img_display;
-    img.copyTo( img_display );
-    Point anchor;
-    int padding_x;
-    int padding_y;
-    int bound_x;
-    int bound_y;
-    
-    //confine the search area
-    if (lastDetection.x == 0 && lastDetection.y == 0) {//first iteration, search lower 3/5 of the image
-        anchor.x = 0;
-        anchor.y = img.rows/5*2;
-        
-        padding_x = img.cols;
-        padding_y = img.rows/5*3;
-    } else {
-        anchor.x = lastDetection.x - 60 > 0 ? lastDetection.x - 60: 0;
-        anchor.y = lastDetection.y - 60 > 0 ? lastDetection.y - 60: 0;
-        bound_x = anchor.x + templ.cols + 60 * 2;
-        bound_y = anchor.y + templ.rows + 60 * 2;
-
-        if(bound_x > W) bound_x = W;
-        if(bound_y > H) bound_y = H;
-        
-        padding_x = bound_x - anchor.x ;
-        padding_y = bound_y - anchor.y ;
-        
-    }
-    
-    ///create image of lower half region
-    Mat smallImg = Mat(img, Rect(anchor.x, anchor.y, padding_x, padding_y));
-    //cout<<"last: x "<<to_string(lastDetection.x)<<" y "<<to_string(lastDetection.y)<<endl;
-    //cout<<"anchor: x "<<to_string(anchor.x)<<" y "<<to_string(anchor.y)<<endl;
-    //cout<<"anchor + padding x "<<to_string(padding_x + anchor.x)<<" y "<<to_string(anchor.y+padding_y)<<endl;
-    
-    /// Create the result matrix
-//    int result_cols =  img.cols - templ.cols + 1;
-//    int result_rows = img.rows - templ.rows + 1;
-    int result_cols =  smallImg.cols - templ.cols + 1;
-    int result_rows = smallImg.rows - templ.rows + 1;
-    
-    result.create( result_rows, result_cols, CV_32FC1 );
-    
-    /// Do the Matching and Normalize
-    matchTemplate( smallImg, templ, result, match_method );
-    normalize( result, result, 0, 1, NORM_MINMAX, -1, Mat() );
-    
-    /// Localizing the best match with minMaxLoc
-    double minVal; double maxVal; Point minLoc; Point maxLoc;
-    Point matchLoc;
-    
-    minMaxLoc( result, &minVal, &maxVal, &minLoc, &maxLoc, Mat() );
-    
-    /// For SQDIFF and SQDIFF_NORMED, the best matches are lower values. For all the other methods, the higher the better
-    if( match_method  == CV_TM_SQDIFF || match_method == CV_TM_SQDIFF_NORMED )
-    { matchLoc = minLoc; }
-    else
-    { matchLoc = maxLoc; }
-    
-    
-    // change back to the x, y in original image
-    matchLoc.y += anchor.y;
-    matchLoc.x += anchor.x;
-    
-    // Show me what you got
-    rectangle( img_display, matchLoc, Point( matchLoc.x + templ.cols , matchLoc.y + templ.rows), Scalar::all(0), 2, 8, 0 );
-    rectangle( img_display, anchor, Point( anchor.x + padding_x , anchor.y + padding_y), Scalar::all(0), 2, 8, 0 );
-    
-    // update
-    lastDetection = matchLoc;
-    
-//    imshow( image_window, img_display );
-//    imshow( result_window, result );
-    imwrite(workspace+"test_case2/"+"result_"+to_string(idx)+".jpg", img_display);
-    
-    cout<< idx<<" " <<matchLoc.y<<endl;
-    
-    return matchLoc.y;
 }
 
 bool process_queue() {
@@ -274,6 +258,7 @@ bool process_queue() {
     }
     return false;
 }
+
 
 
 void showImage(Mat img, const string name) {
