@@ -104,6 +104,7 @@
 		6E9100EB1AE1B8B9007A3330 /* libopencv_video.2.4.6.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_video.2.4.6.dylib; path = ../../../../../../../usr/local/lib/libopencv_video.2.4.6.dylib; sourceTree = "<group>"; };
 		6E9100EC1AE1B8B9007A3330 /* libopencv_videostab.2.4.6.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_videostab.2.4.6.dylib; path = ../../../../../../../usr/local/lib/libopencv_videostab.2.4.6.dylib; sourceTree = "<group>"; };
 		6E9100ED1AE1B8B9007A3330 /* libopencv_videostab.2.4.6.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_videostab.2.4.6.dylib; path = ../../../../../../../usr/local/lib/libopencv_videostab.2.4.6.dylib; sourceTree = "<group>"; };
+		6EF9186F1AEC4C8F00E2B229 /* qsound.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = qsound.h; path = ../../../../../../../usr/local/Cellar/qt/4.8.6/lib/QtGui.framework/Versions/4/Headers/qsound.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -158,6 +159,7 @@
 		6E9100B31AE1B6AA007A3330 = {
 			isa = PBXGroup;
 			children = (
+				6EF9186F1AEC4C8F00E2B229 /* qsound.h */,
 				6E9100C81AE1B8B9007A3330 /* libopencv_calib3d.2.4.6.dylib */,
 				6E9100C91AE1B8B9007A3330 /* libopencv_calib3d.2.4.6.dylib */,
 				6E9100CA1AE1B8B9007A3330 /* libopencv_contrib.2.4.6.dylib */,
@@ -349,6 +351,10 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
 				CLANG_CXX_LIBRARY = "libc++";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/Cellar/qt/4.8.6/lib,
+				);
 				HEADER_SEARCH_PATHS = /usr/local/include/;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib/;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
@@ -361,6 +367,10 @@
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
 				CLANG_CXX_LIBRARY = "libc++";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/Cellar/qt/4.8.6/lib,
+				);
 				HEADER_SEARCH_PATHS = /usr/local/include/;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib/;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
@@ -387,6 +397,7 @@
 				6E9100C71AE1B6AA007A3330 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
