@@ -55,7 +55,7 @@ Mat yellowFilter(const Mat& src);
 Mat greenFilter(const Mat& src);
 Mat blueFilter(const Mat& src);
 
-string workspace = "/Users/lucylin/Dropbox/class/VI/project/";
+string workspace = "../Virtual_Xylophone";
 
 
 int main(int argc, const char * argv[])
