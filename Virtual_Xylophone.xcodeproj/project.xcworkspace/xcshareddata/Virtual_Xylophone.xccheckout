@@ -10,29 +10,29 @@
 	<string>Virtual_Xylophone</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>9232539F-92EA-40C1-96B8-CE5ACF0EA57C</key>
+		<key>73ED3535D0636948B05BB5653146F5A2F1C4172B</key>
 		<string>https://github.com/jttte/Virtual_Xylophone.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>Virtual_Xylophone.xcodeproj/project.xcworkspace</string>
+	<string>Virtual_Xylophone.xcodeproj</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>9232539F-92EA-40C1-96B8-CE5ACF0EA57C</key>
+		<key>73ED3535D0636948B05BB5653146F5A2F1C4172B</key>
 		<string>../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
 	<string>https://github.com/jttte/Virtual_Xylophone.git</string>
 	<key>IDESourceControlProjectVersion</key>
-	<integer>110</integer>
+	<integer>111</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>9232539F-92EA-40C1-96B8-CE5ACF0EA57C</string>
+	<string>73ED3535D0636948B05BB5653146F5A2F1C4172B</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>9232539F-92EA-40C1-96B8-CE5ACF0EA57C</string>
+			<string>73ED3535D0636948B05BB5653146F5A2F1C4172B</string>
 			<key>IDESourceControlWCCName</key>
 			<string>Virtual_Xylophone</string>
 		</dict>
