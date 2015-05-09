@@ -19,6 +19,9 @@
 #include <stdlib.h>
 #include <string>
 
+#include <AL/alut.h>
+#include <OpenAL/al.h>
+
 //photobooth video has fps=15
 
 
@@ -55,12 +58,93 @@ Mat yellowFilter(const Mat& src);
 Mat greenFilter(const Mat& src);
 Mat blueFilter(const Mat& src);
 
-string workspace = "../Virtual_Xylophone";
+//string workspace = "/Users/lucylin/Dropbox/class/VI/project/";
+string workspace = "/Users/sangbinmin/Virtual_Xylophone";
+
+#define NUM_BUFFERS 1
+#define NUM_SOURCES 1
+#define NUM_ENVIRONMENTS 1
+
+ALfloat listenerPos[]={0.0,0.0,4.0};
+ALfloat listenerVel[]={0.0,0.0,0.0};
+ALfloat listenerOri[]={0.0,0.0,1.0, 0.0,1.0,0.0};
+
+ALfloat source0Pos[]={ -2.0, 0.0, 0.0};
+ALfloat source0Vel[]={ 0.0, 0.0, 0.0};
+
+ALuint  buffer[NUM_BUFFERS];
+ALuint  source[NUM_SOURCES];
+ALuint  environment[NUM_ENVIRONMENTS];
+
+ALsizei size,freq;
+ALenum  audio_format;
+ALvoid  *data;
+
+void init(void)
+{
+    //alutInit(0, NULL);
+    alutInitWithoutContext(NULL, NULL);
+    
+    alListenerfv(AL_POSITION,listenerPos);
+    alListenerfv(AL_VELOCITY,listenerVel);
+    alListenerfv(AL_ORIENTATION,listenerOri);
+    
+    alGetError(); // clear any error messages
+    
+    /*
+    // Generate buffers, or else no sound will happen!
+    alGenBuffers(NUM_BUFFERS, buffer);
+    
+    if(alGetError() != AL_NO_ERROR)
+    {
+        printf("- Error creating buffers !!\n");
+        exit(1);
+    }
+    else
+    {
+        printf("init() - No errors yet.");
+    }
+    
+    string test = workspace+"sound/Piano/emo_dn_16_06.wav";
+    alutLoadWAVFile(test.c_str(),&audio_format,&data,&size,&freq);
+    alBufferData(buffer[0],audio_format,data,size,freq);
+    alutUnloadWAV(audio_format,data,size,freq);
+    */
+    
+    
+    string test = workspace+"sound/Piano/emo_dn_16_06.wav";
+    buffer[0] = alutCreateBufferFromFile(test.c_str());
+    if (alutGetError() != ALUT_ERROR_NO_ERROR) {
+        return;
+    }
+    
+    
+    alGetError(); /* clear error */
+    alGenSources(NUM_SOURCES, source);
+    
+    if(alGetError() != AL_NO_ERROR)
+    {
+        printf("- Error creating sources !!\n");
+        exit(2);
+    }
+    else
+    {
+        printf("init - no errors after alGenSources\n");
+    }
+    
+    alSourcef(source[0], AL_PITCH, 1.0f);
+    alSourcef(source[0], AL_GAIN, 1.0f);
+    alSourcefv(source[0], AL_POSITION, source0Pos);
+    alSourcefv(source[0], AL_VELOCITY, source0Vel);
+    alSourcei(source[0], AL_BUFFER,buffer[0]);
+    alSourcei(source[0], AL_LOOPING, AL_TRUE);
+}
 
 
 int main(int argc, const char * argv[])
 {
-    
+    //alutInit(&argc, argv);
+    init();
 //    VideoCapture cap;
 //    string filepath = workspace+"test_video2.mov";
 //    cap.open(filepath.c_str());
@@ -139,6 +223,7 @@ int main(int argc, const char * argv[])
     
     for (int i = 1; i<150; i++)
     {
+        alSourcePlay(source[0]);
         img = imread( workspace+"test_case2/"+to_string(i)+".jpg", 1 );
     
         coor = MatchingMethod( 0, 0, i);
@@ -161,6 +246,7 @@ int main(int argc, const char * argv[])
     }
 
     waitKey(0);
+    alutExit();
     return 0;
 
 }
